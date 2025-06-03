@@ -95,9 +95,10 @@ jobs:
         sudo apt install -y flatpak
 
     - name: Download flatpak repo
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
+        path: ${{ env.FLATPAK_BUILD_REPO }}
 
     - name: Create flatpak bundle
       run: |
@@ -106,7 +107,7 @@ jobs:
         flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
 
     - name: Upload flatpak bundle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.FLATPAK_BUNDLE }}
         path: ${{ env.FLATPAK_BUNDLE }}.flatpak
@@ -126,9 +127,10 @@ jobs:
         sudo apt install -y skopeo flatpak jq
 
     - name: Download flatpak repo
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
+        path: ${{ env.FLATPAK_BUILD_REPO }}
 
     - name: Create OCI bundle
       run: |

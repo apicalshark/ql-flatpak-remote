@@ -12,12 +12,19 @@ permissions:
   packages: write
 
 env:
-  APP_ID:                               # App ID (reverse-DNS) (example: org.tenacityaudio.Tenacity)
-  MANIFEST_PATH:                        # Path to manifest (example: org.tenacityaudio.Tenacity.yaml)
-  IMAGE_NAME:                           # Name of Docker image (example: tenacity)
-  IMAGE_TAG:                            # Tag of image  (example: stable, beta, nightly)
-  FLATPAK_BUNDLE:                       # Name of bundle (excl. .flatpak) (example: tenacity)
-  FLATPAK_BRANCH:                       # Flatpak branch (example: stable, beta, nightly)
+  # App ID (reverse-DNS) (example= org.tenacityaudio.Tenacity)
+  APP_ID: io.github.Mrmayman.QuantumLauncher
+  # Path to manifest (example= org.tenacityaudio.Tenacity.yaml)
+  MANIFEST_PATH: io.github.Mrmayman.QuantumLauncher.yml
+  # Name of Docker image (example= tenacity)
+  IMAGE_NAME: quantum-launcher
+  # Tag of image  (example= stable, beta, nightly)
+  IMAGE_TAG: stable
+  # Name of bundle (excl. .flatpak) (example= tenacity)
+  FLATPAK_BUNDLE: quantum-launcher
+  # Flatpak branch (example= stable, beta, nightly)
+  FLATPAK_BRANCH: stable
+
   FLATPAK_BUILD_DIR: build-dir
   FLATPAK_BUILD_REPO: build-repo
 

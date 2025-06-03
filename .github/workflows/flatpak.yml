@@ -76,7 +76,7 @@ jobs:
         flatpak-builder --default-branch=${FLATPAK_BRANCH} --disable-updates --disable-download --ccache --sandbox --repo=${FLATPAK_BUILD_REPO} ${FLATPAK_BUILD_DIR} ${MANIFEST_PATH}
 
     - name: Upload flatpak repo
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
         path: ${{ env.FLATPAK_BUILD_REPO }}

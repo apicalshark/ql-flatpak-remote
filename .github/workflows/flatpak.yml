@@ -56,7 +56,7 @@ jobs:
         flatpak-builder --default-branch=${FLATPAK_BRANCH} --download-only /dev/null ${MANIFEST_PATH}
 
     - name: Prime cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           .flatpak-builder/ccache
@@ -64,13 +64,19 @@ jobs:
         restore-keys: |
           flatpak-builder-
 
+    # In Ubuntu, Git no longer allows you to add a submodule via file:///
+    # transport. As a fix, run git config --global protocol.file.allow always
+    - name: Fix Git
+      run: |
+        git config --global protocol.file.allow always
+
     - name: Build flatpak
       run: |
         set -e
         flatpak-builder --default-branch=${FLATPAK_BRANCH} --disable-updates --disable-download --ccache --sandbox --repo=${FLATPAK_BUILD_REPO} ${FLATPAK_BUILD_DIR} ${MANIFEST_PATH}
 
     - name: Upload flatpak repo
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
         path: ${{ env.FLATPAK_BUILD_REPO }}
@@ -89,7 +95,7 @@ jobs:
         sudo apt install -y flatpak
 
     - name: Download flatpak repo
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v3
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
 
@@ -100,7 +106,7 @@ jobs:
         flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
 
     - name: Upload flatpak bundle
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ env.FLATPAK_BUNDLE }}
         path: ${{ env.FLATPAK_BUNDLE }}.flatpak
@@ -116,15 +122,11 @@ jobs:
     - name: Install flatpak and libcontainers tools
       run: |
         set -e
-        . /etc/os-release
-        sudo curl -L -o /etc/apt/keyrings/devel_kubic_libcontainers_stable.asc https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key
-        sudo chmod 644 /etc/apt/keyrings/devel_kubic_libcontainers_stable.asc
-        echo "deb [signed-by=/etc/apt/keyrings/devel_kubic_libcontainers_stable.asc] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list > /dev/null
         sudo apt update -y
         sudo apt install -y skopeo flatpak jq
 
     - name: Download flatpak repo
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v3
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
 

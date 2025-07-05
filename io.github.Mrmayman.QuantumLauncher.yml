@@ -6,7 +6,6 @@ runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
-sdk-version: '24.08'
 command: quantum-launcher
 finish-args:
   # Needs to talk to the network:

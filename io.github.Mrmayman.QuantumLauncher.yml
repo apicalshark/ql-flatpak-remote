@@ -6,6 +6,7 @@ runtime-version: "24.08"
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
+sdk-version: "24.08"
 command: quantum-launcher
 finish-args:
   # Needs to talk to the network:
@@ -36,11 +37,11 @@ modules:
     sources:
       - type: git
         url: https://github.com/Mrmayman/quantum-launcher
-        tag: v0.4.1-D
+        tag: v0.4.0
         commit: 715bb2a78ff2088f13516e0a413855ec15d42dff
         x-checker-data:
           type: git
-          tag-pattern: ^v([\d.]+)(?:-([a-zA-Z0-9]+))?$
+          tag-pattern: ^v((?:[\d.]+)(?:-(?:[a-zA-Z0-9]+))?)$
       - flathub-sources.json
     build-commands:
       - cargo --offline fetch --manifest-path Cargo.toml --verbose

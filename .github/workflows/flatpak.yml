@@ -43,26 +43,12 @@ jobs:
         sudo apt update -y
         sudo apt install -y flatpak-builder
 
-    - name: Dump canonical manifest
-      run: |
-        set -e
-        flatpak-builder --show-manifest ${MANIFEST_PATH} > canonical-manifest.json
-
     - name: Download flatpak SDK and sources
       run: |
         set -e
         flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
         flatpak-builder --default-branch=${FLATPAK_BRANCH} --install-deps-from=flathub --install-deps-only --user /dev/null ${MANIFEST_PATH}
         flatpak-builder --default-branch=${FLATPAK_BRANCH} --download-only /dev/null ${MANIFEST_PATH}
-
-    - name: Prime cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          .flatpak-builder/ccache
-        key: flatpak-builder-${{ hashFiles('canonical-manifest.json') }}
-        restore-keys: |
-          flatpak-builder-
 
     # In Ubuntu, Git no longer allows you to add a submodule via file:///
     # transport. As a fix, run git config --global protocol.file.allow always

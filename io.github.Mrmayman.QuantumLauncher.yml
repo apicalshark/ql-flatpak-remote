@@ -2,7 +2,7 @@ app-id: io.github.Mrmayman.QuantumLauncher
 rename-desktop-file: quantum-launcher.desktop
 rename-appdata-file: quantum-launcher.metainfo.xml
 runtime: org.freedesktop.Platform
-runtime-version: "24.08"
+runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
@@ -40,7 +40,7 @@ modules:
         commit: 715bb2a78ff2088f13516e0a413855ec15d42dff
         x-checker-data:
           type: git
-          tag-pattern: ^v([\d.]+)(?:-([a-zA-Z0-9]+))?$
+          tag-pattern: ^(v(?:[\d.]+)(?:-(?:[a-zA-Z0-9]+))?)$
       - flathub-sources.json
     build-commands:
       - cargo --offline fetch --manifest-path Cargo.toml --verbose
@@ -51,6 +51,6 @@ modules:
       - install -Dm644 assets/icon/256x256/ql_logo.png /app/share/icons/hicolor/256x256/apps/io.github.Mrmayman.QuantumLauncher.png
       - install -Dm644 assets/icon/512x512/ql_logo.png /app/share/icons/hicolor/512x512/apps/io.github.Mrmayman.QuantumLauncher.png
     build-options:
-      append-path: "/usr/lib/sdk/rust-stable/bin"
+      append-path: /usr/lib/sdk/rust-stable/bin
       env:
         CARGO_HOME: /run/build/quantum-launcher/cargo

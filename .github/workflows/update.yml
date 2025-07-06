@@ -1,14 +1,12 @@
-# Based on https://github.com/tenacityteam/tenacity-flatpak-nightly
 name: Update
 on:
-  #schedule:
-    #- cron: '0 0 * * 0'
+  schedule:
+    - cron: 0 0 * * 0
   workflow_dispatch:
 
 env:
-  MANIFEST_PATH: org.tenacityaudio.Tenacity.yaml
-  REPO:
-
+  MANIFEST_PATH: io.github.Mrmayman.QuantumLauncher.yml
+  REPO_BRANCH: main
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -21,18 +19,20 @@ jobs:
         submodules: true
 
     - name: Update manifest
+      continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ secrets.PAT }}
       run: |
         set -x
-        git clone -b main https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git main
-        cd main
+        git clone -b ${REPO_BRANCH} https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git ${REPO_BRANCH}
+        cd ${REPO_BRANCH}
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git config user.name "github-actions[bot]"
         /app/flatpak-external-data-checker --update --commit-only ${MANIFEST_PATH}
 
     - name: Push to branch
+      continue-on-error: true
       run: |
         set -x
-        cd main
-        git push https://${{ github.actor }}:${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+        cd ${REPO_BRANCH}
+        git push https://${{ github.actor }}:${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:${REPO_BRANCH}

@@ -25,7 +25,7 @@ jobs:
         set -x
         apt-get -y update
         apt-get -y install curl
-        LATEST_TAG=$(curl -sL "https://api.github.com/repos/Mrmayman/quantumlauncher/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
+        export LATEST_TAG=$(curl -sL "https://api.github.com/repos/Mrmayman/quantumlauncher/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
         curl -L "https://raw.githubusercontent.com/Mrmayman/quantumlauncher/${LATEST_TAG}/flathub-sources.json" -o flathub-sources.json
         cp flathub-sources.json ./${REPO_BRANCH}/flathub-sources.json
         git clone -b ${REPO_BRANCH} https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git ${REPO_BRANCH}

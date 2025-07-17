@@ -19,19 +19,22 @@ jobs:
         submodules: true
 
     - name: Update manifest
-      continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ secrets.PAT }}
       run: |
         set -x
+        apt-get -y update
+        apt-get -y install curl
+        export LATEST_TAG=$(curl -sL "https://api.github.com/repos/Mrmayman/quantumlauncher/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
         git clone -b ${REPO_BRANCH} https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git ${REPO_BRANCH}
+        curl -L "https://raw.githubusercontent.com/Mrmayman/quantumlauncher/${LATEST_TAG}/flathub-sources.json" -o flathub-sources.json
+        mv -f flathub-sources.json ${REPO_BRANCH}
         cd ${REPO_BRANCH}
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git config user.name "github-actions[bot]"
         /app/flatpak-external-data-checker --update --commit-only ${MANIFEST_PATH}
 
     - name: Push to branch
-      continue-on-error: true
       run: |
         set -x
         cd ${REPO_BRANCH}

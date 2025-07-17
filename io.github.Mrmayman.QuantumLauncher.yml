@@ -31,14 +31,14 @@ modules:
       - type: archive
         url: https://www.x.org/releases/individual/app/xrandr-1.5.3.tar.gz
         sha256: 980befa14b48de2fa74dc07bbb22f746acfd12e1f9dbd539eab9a3c9b434d667
-        
+
   - name: quantum-launcher
     buildsystem: simple
     sources:
       - type: git
         url: https://github.com/Mrmayman/quantum-launcher
-        tag: v0.4.0
-        commit: 1111111111111111111111111111111111111111
+        tag: v0.4.1-D
+        commit: 715bb2a78ff2088f13516e0a413855ec15d42dff
         x-checker-data:
           type: git
           tag-pattern: ^(v(?:[\d.]+)(?:-(?:[a-zA-Z0-9]+))?)$

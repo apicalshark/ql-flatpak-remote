@@ -38,7 +38,7 @@ jobs:
         chmod +x flatpak-cargo-generator.py
         python3 flatpak-cargo-generator.py Cargo.lock -o flathub-sources.json
         rm -f flatpak-cargo-generator.py Cargo.lock
-        git add flathub-sources.json
+        git add flathub-sources.json && git commit -m "Update flathub-sources.json from Quantum Launcher ${LATEST_TAG}"
         
         /app/flatpak-external-data-checker --update --commit-only ${MANIFEST_PATH}
 

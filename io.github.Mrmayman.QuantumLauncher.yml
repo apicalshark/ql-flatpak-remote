@@ -31,6 +31,7 @@ modules:
       - type: archive
         url: https://www.x.org/releases/individual/app/xrandr-1.5.3.tar.gz
         sha256: 980befa14b48de2fa74dc07bbb22f746acfd12e1f9dbd539eab9a3c9b434d667
+
   - name: quantum-launcher
     buildsystem: simple
     sources:

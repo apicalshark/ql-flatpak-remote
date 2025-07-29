@@ -32,7 +32,7 @@ jobs:
         rm -f flathub-sources.json
         curl -L "https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py" -o flatpak-cargo-generator.py
         chmod +x flatpak-cargo-generator.py
-        flatpak-cargo-generator.py -o flathub-sources.json Cargo.lock
+        python3 flatpak-cargo-generator.py -o flathub-sources.json Cargo.lock
 
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git config user.name "github-actions[bot]"

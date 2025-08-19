@@ -18,36 +18,41 @@ jobs:
       with:
         submodules: true
 
-    - name: Update manifest
+    - name: Prepare environment
       env:
         GITHUB_TOKEN: ${{ secrets.PAT }}
       run: |
-        set -x
-        # Install dependencies
         apt-get -y update
         apt-get -y install curl python3 python3-venv python3-pip
-        # Create a virtual environment and install required Python packages
-        python3 -m venv venv && source venv/bin/activate && python3 -m pip install toml aiohttp
-        # Clone the repository and prepare to update the manifest
+        python3 -m venv venv && . venv/bin/activate && python3 -m pip install aiohttp tomlkit
         git clone -b ${REPO_BRANCH} https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git ${REPO_BRANCH}
-        export LATEST_TAG=$(curl -sL "https://api.github.com/repos/Mrmayman/quantumlauncher/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
 
+    - name: Generate flathub-sources.json
+      continue-on-error: true
+      run: |
+        set -x
+        . venv/bin/activate
         cd ${REPO_BRANCH}
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git config user.name "github-actions[bot]"
-
-        # Fetch Cargo.lock and flatpak-cargo-generator.py
-        rm -f flathub-sources.json
+        export LATEST_TAG=$(curl -sL "https://api.github.com/repos/Mrmayman/quantumlauncher/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
         curl -L "https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py" -o flatpak-cargo-generator.py
         curl -L "https://raw.githubusercontent.com/Mrmayman/quantumlauncher/${LATEST_TAG}/Cargo.lock" -o Cargo.lock
         
-        # Generate flathub-sources.json
         chmod +x flatpak-cargo-generator.py
+        mv flathub-sources.json flathub-sources.json.bak
         python3 flatpak-cargo-generator.py Cargo.lock -o flathub-sources.json
+        [ -f flathub-sources.json ] && rm -f flathub-sources.json.bak || mv flathub-sources.json.bak flathub-sources.json
         rm -f flatpak-cargo-generator.py Cargo.lock
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
         git add flathub-sources.json && git commit -m "Update flathub-sources.json from Quantum Launcher ${LATEST_TAG}"
-        
-        # Update the manifest with flatpak-external-data-checker
+
+    - name: Update manifest
+      run: |
+        set -x
+        cd ${REPO_BRANCH}
+        rm -f flatpak-cargo-generator.py Cargo.lock
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
         /app/flatpak-external-data-checker --update --commit-only ${MANIFEST_PATH}
 
     - name: Push to branch

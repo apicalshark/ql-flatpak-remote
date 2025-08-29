@@ -14,10 +14,12 @@ finish-args:
   - --share=ipc
   - --socket=x11
 
+  # TEST: Wayland support
+  - --socket=wayland
   # The app mistakenly assumes wayland support after
   # seeing this variable, even though only X11 is present
   # See https://github.com/flatpak/flatpak/issues/3948
-  - --unset-env=WAYLAND_DISPLAY
+  # - --unset-env=WAYLAND_DISPLAY
 
   # Controller and input devices
   - --device=all

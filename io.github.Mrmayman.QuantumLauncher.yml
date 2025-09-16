@@ -14,7 +14,7 @@ finish-args:
   - --share=ipc
   - --socket=x11
 
-  # TEST: Wayland support
+  # TESTING Required: Wayland support
   - --socket=wayland
   # The app mistakenly assumes wayland support after
   # seeing this variable, even though only X11 is present

@@ -2,7 +2,7 @@ app-id: io.github.Mrmayman.QuantumLauncher
 rename-desktop-file: quantum-launcher.desktop
 rename-appdata-file: quantum-launcher.metainfo.xml
 runtime: org.freedesktop.Platform
-runtime-version: '24.08'
+runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable

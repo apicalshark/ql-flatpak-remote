@@ -14,7 +14,7 @@ finish-args:
   - --share=ipc
   - --socket=x11
 
-  # TESTING Required: Wayland support
+  # Wayland support
   - --socket=wayland
   # The app mistakenly assumes wayland support after
   # seeing this variable, even though only X11 is present
@@ -28,6 +28,38 @@ finish-args:
   # Access to keystore for Microsoft login
   - --talk-name=org.freedesktop.secrets
 modules:
+  # Might be needed by some Controller mods (see https://github.com/isXander/Controlify/issues/31)
+  - shared-modules/libusb/libusb.json
+
+  # Wayland might need this
+  - name: libdecor
+    buildsystem: meson
+    config-opts:
+      - -Ddemos=false
+    sources:
+     - type: git
+       url: https://gitlab.freedesktop.org/libdecor/libdecor.git
+       tag: 0.2.4
+       commit: 4d026d59edbf8e2e876c3f2c07c480f8840aa922
+       x-checker-data:
+         type: git
+         tag-pattern: ^((?:[\d.]+)(?:-(?:[a-zA-Z0-9]+))?)$
+
+  # For in-game narrator
+  - name: flite
+    config-opts:
+      - --enable-shared
+      - --with-audio=pulseaudio
+    no-parallel-make: true
+    sources:
+      - type: git
+        url: https://github.com/festvox/flite.git
+        tag: v2.2
+        commit: e9e2e37c329dbe98bfeb27a1828ef9a71fa84f88
+        x-checker-data:
+          type: git
+          tag-pattern: ^(v(?:[\d.]+)(?:-(?:[a-zA-Z0-9]+))?)$
+
   - name: xrandr
     sources:
       - type: archive

@@ -35,7 +35,7 @@ modules:
   - name: libdecor
     buildsystem: meson
     config-opts:
-      - -Ddemos=false
+      - -Ddemo=false
     sources:
      - type: git
        url: https://gitlab.freedesktop.org/libdecor/libdecor.git

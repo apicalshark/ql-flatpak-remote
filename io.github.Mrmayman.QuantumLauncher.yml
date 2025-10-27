@@ -31,20 +31,6 @@ modules:
   # Might be needed by some Controller mods (see https://github.com/isXander/Controlify/issues/31)
   - shared-modules/libusb/libusb.json
 
-  # Wayland might need this
-  - name: libdecor
-    buildsystem: meson
-    config-opts:
-      - -Ddemo=false
-    sources:
-     - type: git
-       url: https://gitlab.freedesktop.org/libdecor/libdecor.git
-       tag: 0.2.4
-       commit: 4d026d59edbf8e2e876c3f2c07c480f8840aa922
-       x-checker-data:
-         type: git
-         tag-pattern: ^((?:[\d.]+)(?:-(?:[a-zA-Z0-9]+))?)$
-
   # For in-game narrator
   - name: flite
     config-opts:

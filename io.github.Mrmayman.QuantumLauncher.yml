@@ -13,14 +13,15 @@ finish-args:
   # X11 + XShm access, fallback-x11 wont work in wayland
   - --share=ipc
   - --socket=x11
-
   # Wayland support
   - --socket=wayland
   # The app mistakenly assumes wayland support after
   # seeing this variable, even though only X11 is present
   # See https://github.com/flatpak/flatpak/issues/3948
   # - --unset-env=WAYLAND_DISPLAY
-
+  
+  # for Discord RPC
+  - --filesystem=xdg-run/app/com.discordapp.Discord:create
   # Controller and input devices
   - --device=all
   # Access to PulseAudio

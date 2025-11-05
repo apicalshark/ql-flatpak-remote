@@ -19,7 +19,6 @@ finish-args:
   # seeing this variable, even though only X11 is present
   # See https://github.com/flatpak/flatpak/issues/3948
   # - --unset-env=WAYLAND_DISPLAY
-  
   # for Discord RPC
   - --filesystem=xdg-run/app/com.discordapp.Discord:create
   # Controller and input devices
@@ -53,6 +52,31 @@ modules:
         url: https://www.x.org/releases/individual/app/xrandr-1.5.3.tar.gz
         sha256: 980befa14b48de2fa74dc07bbb22f746acfd12e1f9dbd539eab9a3c9b434d667
 
+  - name: gamemode
+    buildsystem: meson
+    config-opts:
+      - -Dwith-sd-bus-provider=no-daemon
+      - -Dwith-examples=false
+    post-install:
+      # gamemoderun is installed for users who want to use wrapper commands
+      # post-install is running inside the build dir, we need it from the source though
+      - install -Dm755 ../data/gamemoderun -t /app/bin
+    sources:
+      - type: archive
+        dest-filename: gamemode.tar.gz
+        url: https://api.github.com/repos/FeralInteractive/gamemode/tarball/1.8.2
+        sha256: 2886d4ce543c78bd2a364316d5e7fd59ef06b71de63f896b37c6d3dc97658f60
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/FeralInteractive/gamemode/releases/latest
+          version-query: .tag_name
+          url-query: .tarball_url
+          timestamp-query: .published_at
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /lib/libgamemodeauto.a
+
   - name: quantum-launcher
     buildsystem: simple
     sources:
@@ -64,14 +88,20 @@ modules:
           type: git
           tag-pattern: ^(v(?:[\d.]+)(?:-(?:[a-zA-Z0-9]+))?)$
       - flathub-sources.json
+      - type: file
+        path: quantum-launcher
+      - type: file
+        path: prime-run
     build-commands:
       - cargo --offline fetch --manifest-path Cargo.toml --verbose
       - cargo --offline build --profile release-ql --verbose
-      - install -Dm755 target/release-ql/quantum_launcher /app/bin/quantum-launcher
+      - install -Dm755 target/release-ql/quantum_launcher /app/bin/quantum_launcher
       - install -Dm644 assets/freedesktop/quantum-launcher.desktop /app/share/applications/quantum-launcher.desktop
       - install -Dm644 assets/freedesktop/quantum-launcher.metainfo.xml /app/share/metainfo/quantum-launcher.metainfo.xml
       - install -Dm644 assets/icon/256x256/ql_logo.png /app/share/icons/hicolor/256x256/apps/io.github.Mrmayman.QuantumLauncher.png
       - install -Dm644 assets/icon/512x512/ql_logo.png /app/share/icons/hicolor/512x512/apps/io.github.Mrmayman.QuantumLauncher.png
+      - install -Dm755 quantum-launcher /app/bin/quantum-launcher
+      - install -Dm755 prime-run /app/bin/prime-run
     build-options:
       append-path: /usr/lib/sdk/rust-stable/bin
       env:

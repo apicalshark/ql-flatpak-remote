@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: true
 
@@ -62,7 +62,7 @@ jobs:
         flatpak-builder --default-branch=${FLATPAK_BRANCH} --disable-updates --disable-download --ccache --sandbox --repo=${FLATPAK_BUILD_REPO} ${FLATPAK_BUILD_DIR} ${MANIFEST_PATH}
 
     - name: Upload flatpak repo
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
         path: ${{ env.FLATPAK_BUILD_REPO }}
@@ -72,8 +72,6 @@ jobs:
     needs: build
 
     steps:
-    - uses: actions/checkout@v4
-
     - name: Install flatpak
       run: |
         set -e
@@ -81,7 +79,7 @@ jobs:
         sudo apt install -y flatpak
 
     - name: Download flatpak repo
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
         path: ${{ env.FLATPAK_BUILD_REPO }}
@@ -93,7 +91,7 @@ jobs:
         flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
 
     - name: Upload flatpak bundle
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: ${{ env.FLATPAK_BUNDLE }}
         path: ${{ env.FLATPAK_BUNDLE }}.flatpak
@@ -104,8 +102,6 @@ jobs:
     needs: build
 
     steps:
-    - uses: actions/checkout@v4
-
     - name: Install flatpak and libcontainers tools
       run: |
         set -e
@@ -113,7 +109,7 @@ jobs:
         sudo apt install -y skopeo flatpak jq
 
     - name: Download flatpak repo
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}
         path: ${{ env.FLATPAK_BUILD_REPO }}

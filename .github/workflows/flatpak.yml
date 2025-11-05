@@ -72,8 +72,6 @@ jobs:
     needs: build
 
     steps:
-    - uses: actions/checkout@v5
-
     - name: Install flatpak
       run: |
         set -e
@@ -104,8 +102,6 @@ jobs:
     needs: build
 
     steps:
-    - uses: actions/checkout@v5
-
     - name: Install flatpak and libcontainers tools
       run: |
         set -e
@@ -125,10 +121,7 @@ jobs:
         flatpak build-bundle \
           --oci \
           --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
-          ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
-        ls -al .
-        rm -rf ${FLATPAK_BUNDLE}
-        mv ${FLATPAK_BUNDLE}.flatpak ${FLATPAK_BUNDLE}
+          ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE} ${APP_ID} ${FLATPAK_BRANCH}
 
     - name: Publish OCI image
       env:

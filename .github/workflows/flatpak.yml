@@ -126,6 +126,8 @@ jobs:
           --oci \
           --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
           ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
+        ls -al .
+        rm -rf ${FLATPAK_BUNDLE}
         mv ${FLATPAK_BUNDLE}.flatpak ${FLATPAK_BUNDLE}
 
     - name: Publish OCI image

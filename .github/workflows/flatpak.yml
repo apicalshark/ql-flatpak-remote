@@ -48,8 +48,8 @@ jobs:
     - name: Install flatpak-builder
       run: |
         set -e
-        sudo apt update -y
-        sudo apt install -y flatpak-builder
+        sudo apt-get update
+        sudo apt-get install flatpak-builder appstream appstream-util
 
     - name: Download flatpak SDK and sources
       run: |
@@ -84,8 +84,8 @@ jobs:
     - name: Install flatpak and libcontainers tools
       run: |
         set -e
-        sudo apt update -y
-        sudo apt install -y skopeo flatpak jq podman
+        sudo apt-get update
+        sudo apt-get install skopeo flatpak jq podman appstream appstream-util
 
     - name: Download flatpak repo
       uses: actions/download-artifact@v6

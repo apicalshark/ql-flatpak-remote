@@ -24,11 +24,11 @@ jobs:
 
     - name: Add Flathub (Required for Runtime)
       run: |
-        flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+        sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
     - name: Add Quantum Launcher Remote
       run: |
-        flatpak remote-add --if-not-exists quantum-launcher oci+https://apicalshark.github.io/ql-flatpak-remote/
+        sudo flatpak remote-add --if-not-exists quantum-launcher oci+https://apicalshark.github.io/ql-flatpak-remote/
 
     - name: Update AppStream
       run: |

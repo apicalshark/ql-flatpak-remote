@@ -32,7 +32,7 @@ jobs:
 
     - name: Update AppStream
       run: |
-        flatpak update --appstream
+        sudo flatpak update --appstream
 
     - name: Install Quantum Launcher
       run: |

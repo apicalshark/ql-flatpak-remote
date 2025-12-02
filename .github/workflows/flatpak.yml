@@ -49,7 +49,7 @@ jobs:
       run: |
         set -e
         sudo apt-get update
-        sudo apt-get install flatpak-builder appstream appstream-util libgdk-pixbuf-2.0-dev
+        sudo apt-get install flatpak-builder
 
     - name: Download flatpak SDK and sources
       run: |
@@ -85,7 +85,7 @@ jobs:
       run: |
         set -e
         sudo apt-get update
-        sudo apt-get install skopeo flatpak jq podman appstream appstream-util libgdk-pixbuf-2.0-dev
+        sudo apt-get install skopeo flatpak jq podman
 
     - name: Download flatpak repo
       uses: actions/download-artifact@v6

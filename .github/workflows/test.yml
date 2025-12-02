@@ -36,7 +36,7 @@ jobs:
 
     - name: Install Quantum Launcher
       run: |
-        flatpak install -y io.github.Mrmayman.QuantumLauncher
+        sudo flatpak install -y io.github.Mrmayman.QuantumLauncher
 
     - name: Run Help Command
       run: |

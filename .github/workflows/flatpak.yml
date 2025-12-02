@@ -30,7 +30,15 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
 
     steps:
     - uses: actions/checkout@v5
@@ -64,12 +72,15 @@ jobs:
     - name: Upload flatpak repo
       uses: actions/upload-artifact@v5
       with:
-        name: ${{ env.FLATPAK_BUILD_REPO }}
+        name: ${{ env.FLATPAK_BUILD_REPO }}-${{ matrix.arch }}
         path: ${{ env.FLATPAK_BUILD_REPO }}
 
   publish-bundle:
     runs-on: ubuntu-24.04
     needs: build
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
 
     steps:
     - name: Install flatpak
@@ -81,20 +92,20 @@ jobs:
     - name: Download flatpak repo
       uses: actions/download-artifact@v6
       with:
-        name: ${{ env.FLATPAK_BUILD_REPO }}
+        name: ${{ env.FLATPAK_BUILD_REPO }}-${{ matrix.arch }}
         path: ${{ env.FLATPAK_BUILD_REPO }}
 
     - name: Create flatpak bundle
       run: |
         set -e
         mkdir -p ${FLATPAK_BUILD_REPO}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
-        flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
+        flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}-${{ matrix.arch }}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
 
     - name: Upload flatpak bundle
       uses: actions/upload-artifact@v5
       with:
-        name: ${{ env.FLATPAK_BUNDLE }}
-        path: ${{ env.FLATPAK_BUNDLE }}.flatpak
+        name: ${{ env.FLATPAK_BUNDLE }}-${{ matrix.arch }}
+        path: ${{ env.FLATPAK_BUNDLE }}-${{ matrix.arch }}.flatpak
 
   publish-oci:
     if: github.ref == 'refs/heads/main'
@@ -106,34 +117,33 @@ jobs:
       run: |
         set -e
         sudo apt update -y
-        sudo apt install -y skopeo flatpak jq
+        sudo apt install -y skopeo flatpak jq podman
 
     - name: Download flatpak repo
       uses: actions/download-artifact@v6
       with:
-        name: ${{ env.FLATPAK_BUILD_REPO }}
-        path: ${{ env.FLATPAK_BUILD_REPO }}
+        pattern: ${{ env.FLATPAK_BUILD_REPO }}-*
 
-    - name: Create OCI bundle
-      run: |
-        set -e
-        mkdir -p ${FLATPAK_BUILD_REPO}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
-        flatpak build-bundle \
-          --oci \
-          --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
-          ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE} ${APP_ID} ${FLATPAK_BRANCH}
-
-    - name: Publish OCI image
+    - name: Create and Publish OCI bundles
       env:
         GITHUB_TOKEN: ${{ secrets.PAT }}
         REGISTRY_AUTH_FILE: /tmp/auth.json
       run: |
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
-        skopeo login --username "${{ github.actor }}" --password-stdin ghcr.io <<<$GITHUB_TOKEN
-        skopeo copy \
-          oci:${FLATPAK_BUNDLE} \
-          docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG
+        echo "$GITHUB_TOKEN" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+        podman manifest create local-list
+
+        for ARCH in amd64 arm64; do
+          mkdir -p ${FLATPAK_BUILD_REPO}-${ARCH}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
+          flatpak build-bundle \
+            --oci \
+            --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
+            ${FLATPAK_BUILD_REPO}-${ARCH} ${FLATPAK_BUNDLE}-${ARCH} ${APP_ID} ${FLATPAK_BRANCH}
+          podman manifest add --arch $ARCH local-list oci:${FLATPAK_BUNDLE}-${ARCH}
+        done
+        
+        podman manifest push --all local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}
 
     - name: Update static index
       env:
@@ -142,7 +152,7 @@ jobs:
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
         git clone -b gh-pages https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git gh-pages
-        skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG | \
+                skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG | \
           jq '. as $img | { "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [$img] } ] }' \
           > gh-pages/index/static
         cd gh-pages

@@ -108,14 +108,12 @@ jobs:
           BUNDLE_NAME="${FLATPAK_BUNDLE}-${ARCH}"
           echo "Building bundle for $ARCH ($FLATPAK_ARCH)..."
           mkdir -p ${REPO_DIR}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
-          # Explicitly pass --arch to flatpak build-bundle
           flatpak build-bundle \
             --arch=${FLATPAK_ARCH} \
             --oci \
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
             ${REPO_DIR} ${BUNDLE_NAME} ${APP_ID} ${FLATPAK_BRANCH}
 
-          # Add to manifest list (podman uses standard oci arch names)
           podman manifest add --arch $ARCH local-list oci:${BUNDLE_NAME}
         done
 
@@ -128,8 +126,11 @@ jobs:
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
         git clone -b gh-pages https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git gh-pages
-        skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG | \
-          jq '. as $img | { "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [$img] } ] }' \
+
+        AMD64_JSON=$(skopeo inspect --override-os=linux --override-arch=amd64 docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG)
+        ARM64_JSON=$(skopeo inspect --override-os=linux --override-arch=arm64 docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG)
+        jq -n --argjson amd64 "$AMD64_JSON" --argjson arm64 "$ARM64_JSON" \
+          '{ "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [$amd64, $arm64] } ] }' \
           > gh-pages/index/static
         cd gh-pages
         git config user.email "github-actions[bot]@users.noreply.github.com"

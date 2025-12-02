@@ -1,0 +1,43 @@
+name: Test Installation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-install:
+    name: Test on ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+
+    steps:
+    - name: Install Flatpak
+      run: |
+        sudo apt-get update
+        sudo apt-get install flatpak
+
+    - name: Add Flathub (Required for Runtime)
+      run: |
+        flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+    - name: Add Quantum Launcher Remote
+      run: |
+        flatpak remote-add --if-not-exists quantum-launcher oci+https://apicalshark.github.io/ql-flatpak-remote/
+
+    - name: Update AppStream
+      run: |
+        flatpak update --appstream
+
+    - name: Install Quantum Launcher
+      run: |
+        flatpak install -y io.github.Mrmayman.QuantumLauncher
+
+    - name: Run Help Command
+      run: |
+        flatpak run io.github.Mrmayman.QuantumLauncher --help

@@ -100,7 +100,7 @@ jobs:
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
         echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-        docker manifest create local-list
+        podman manifest create local-list
         
         for ARCH in amd64 arm64; do
           mkdir -p ${FLATPAK_BUILD_REPO}-${ARCH}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
@@ -108,10 +108,10 @@ jobs:
             --oci \
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
             ${FLATPAK_BUILD_REPO}-${ARCH} ${FLATPAK_BUNDLE}-${ARCH} ${APP_ID} ${FLATPAK_BRANCH}
-          docker manifest add --arch $ARCH local-list oci:${FLATPAK_BUNDLE}-${ARCH}
+          podman manifest add --arch $ARCH local-list oci:${FLATPAK_BUNDLE}-${ARCH}
         done
 
-        docker manifest push --all local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+        podman manifest push --all local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}
 
     - name: Update static index
       env:

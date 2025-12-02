@@ -67,13 +67,13 @@ jobs:
     - name: Build flatpak
       run: |
         set -e
-        flatpak-builder --default-branch=${FLATPAK_BRANCH} --disable-updates --disable-download --ccache --sandbox --repo=${FLATPAK_BUILD_REPO} ${FLATPAK_BUILD_DIR} ${MANIFEST_PATH}
+        flatpak-builder --default-branch=${FLATPAK_BRANCH} --disable-updates --disable-download --ccache --sandbox --repo=${FLATPAK_BUILD_REPO}-${{ matrix.arch }} ${FLATPAK_BUILD_DIR} ${MANIFEST_PATH}
 
     - name: Upload flatpak repo
       uses: actions/upload-artifact@v5
       with:
         name: ${{ env.FLATPAK_BUILD_REPO }}-${{ matrix.arch }}
-        path: ${{ env.FLATPAK_BUILD_REPO }}
+        path: ${{ env.FLATPAK_BUILD_REPO }}-${{ matrix.arch }}
 
   publish-oci:
     if: github.ref == 'refs/heads/main'
@@ -99,16 +99,24 @@ jobs:
       run: |
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
-        echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        echo "$GITHUB_TOKEN" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
         podman manifest create local-list
-        
+
         for ARCH in amd64 arm64; do
-          mkdir -p ${FLATPAK_BUILD_REPO}-${ARCH}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
+          if [ "$ARCH" == "amd64" ]; then FLATPAK_ARCH="x86_64"; else FLATPAK_ARCH="aarch64"; fi
+          REPO_DIR="${FLATPAK_BUILD_REPO}-${ARCH}"
+          BUNDLE_NAME="${FLATPAK_BUNDLE}-${ARCH}"
+          echo "Building bundle for $ARCH ($FLATPAK_ARCH)..."
+          mkdir -p ${REPO_DIR}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
+          # Explicitly pass --arch to flatpak build-bundle
           flatpak build-bundle \
+            --arch=${FLATPAK_ARCH} \
             --oci \
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
-            ${FLATPAK_BUILD_REPO}-${ARCH} ${FLATPAK_BUNDLE}-${ARCH} ${APP_ID} ${FLATPAK_BRANCH}
-          podman manifest add --arch $ARCH local-list oci:${FLATPAK_BUNDLE}-${ARCH}
+            ${REPO_DIR} ${BUNDLE_NAME} ${APP_ID} ${FLATPAK_BRANCH}
+
+          # Add to manifest list (podman uses standard oci arch names)
+          podman manifest add --arch $ARCH local-list oci:${BUNDLE_NAME}
         done
 
         podman manifest push --all local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}

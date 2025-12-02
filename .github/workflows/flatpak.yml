@@ -75,38 +75,6 @@ jobs:
         name: ${{ env.FLATPAK_BUILD_REPO }}-${{ matrix.arch }}
         path: ${{ env.FLATPAK_BUILD_REPO }}
 
-  publish-bundle:
-    runs-on: ubuntu-24.04
-    needs: build
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
-
-    steps:
-    - name: Install flatpak
-      run: |
-        set -e
-        sudo apt update -y
-        sudo apt install -y flatpak
-
-    - name: Download flatpak repo
-      uses: actions/download-artifact@v6
-      with:
-        name: ${{ env.FLATPAK_BUILD_REPO }}-${{ matrix.arch }}
-        path: ${{ env.FLATPAK_BUILD_REPO }}
-
-    - name: Create flatpak bundle
-      run: |
-        set -e
-        mkdir -p ${FLATPAK_BUILD_REPO}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
-        flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}-${{ matrix.arch }}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
-
-    - name: Upload flatpak bundle
-      uses: actions/upload-artifact@v5
-      with:
-        name: ${{ env.FLATPAK_BUNDLE }}-${{ matrix.arch }}
-        path: ${{ env.FLATPAK_BUNDLE }}-${{ matrix.arch }}.flatpak
-
   publish-oci:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
@@ -131,19 +99,19 @@ jobs:
       run: |
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
-        echo "$GITHUB_TOKEN" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-        podman manifest create local-list
-
+        echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        docker manifest create local-list
+        
         for ARCH in amd64 arm64; do
           mkdir -p ${FLATPAK_BUILD_REPO}-${ARCH}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
           flatpak build-bundle \
             --oci \
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
             ${FLATPAK_BUILD_REPO}-${ARCH} ${FLATPAK_BUNDLE}-${ARCH} ${APP_ID} ${FLATPAK_BRANCH}
-          podman manifest add --arch $ARCH local-list oci:${FLATPAK_BUNDLE}-${ARCH}
+          docker manifest add --arch $ARCH local-list oci:${FLATPAK_BUNDLE}-${ARCH}
         done
-        
-        podman manifest push --all local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+
+        docker manifest push --all local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}
 
     - name: Update static index
       env:
@@ -152,7 +120,7 @@ jobs:
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
         git clone -b gh-pages https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git gh-pages
-                skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG | \
+        skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG | \
           jq '. as $img | { "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [$img] } ] }' \
           > gh-pages/index/static
         cd gh-pages

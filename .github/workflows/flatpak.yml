@@ -40,16 +40,9 @@ jobs:
             runner: ubuntu-24.04
           - arch: arm64
             alt: aarch64
-            runner: ubuntu-24.04
+            runner: ubuntu-24.04-arm
 
-    steps:
-    - name: Enable KVM group perms
-      run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
-        sudo usermod -a -G kvm $USER
-        
+    steps:        
     - uses: actions/checkout@v6
       with:
         submodules: true
@@ -58,7 +51,7 @@ jobs:
       run: |
         set -e
         sudo apt-get update
-        sudo apt-get install flatpak-builder qemu-utils qemu-efi-aarch64 qemu-system-arm
+        sudo apt-get install flatpak-builder
 
     - name: Download flatpak SDK and sources
       run: |

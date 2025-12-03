@@ -51,7 +51,7 @@ jobs:
       run: |
         set -e
         sudo apt-get update
-        sudo apt-get install flatpak-builder appstream appstream-util
+        sudo apt-get install flatpak-builder
 
     - name: Download flatpak SDK and sources
       run: |

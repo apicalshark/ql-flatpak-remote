@@ -48,6 +48,7 @@ jobs:
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
+        sudo usermod -a -G kvm $USER
         
     - uses: actions/checkout@v6
       with:
@@ -57,7 +58,7 @@ jobs:
       run: |
         set -e
         sudo apt-get update
-        sudo apt-get install flatpak-builder qemu-user-static
+        sudo apt-get install flatpak-builder qemu-utils qemu-efi-aarch64 qemu-system-arm
 
     - name: Download flatpak SDK and sources
       run: |

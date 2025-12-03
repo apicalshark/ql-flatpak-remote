@@ -132,7 +132,7 @@ jobs:
         AMD64_JSON=$(skopeo inspect --override-os=linux --override-arch=amd64 docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG)
         ARM64_JSON=$(skopeo inspect --override-os=linux --override-arch=arm64 docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG)
         jq -n --argjson amd64 "$AMD64_JSON" --argjson arm64 "$ARM64_JSON" \
-          '{ "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [$amd64, $arm64] } ] }' \
+          '{ "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [($amd64 | .RepoTags = []), ($arm64 | .RepoTags = [])] } ] }' \
           > gh-pages/index/static
         cd gh-pages
         git config user.email "github-actions[bot]@users.noreply.github.com"

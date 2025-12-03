@@ -128,9 +128,13 @@ jobs:
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
         git clone -b gh-pages https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git gh-pages
+        MANIFEST_LIST=$(skopeo inspect --raw docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG})
+        DIGEST_AMD64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "amd64") | .digest')
+        DIGEST_ARM64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "arm64") | .digest')
+        echo "Resolved Digests - AMD64: $DIGEST_AMD64, ARM64: $DIGEST_ARM64"
 
-        AMD64_JSON=$(skopeo inspect --override-os=linux --override-arch=amd64 docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG)
-        ARM64_JSON=$(skopeo inspect --override-os=linux --override-arch=arm64 docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG)
+        AMD64_JSON=$(skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}@${DIGEST_AMD64})
+        ARM64_JSON=$(skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}@${DIGEST_ARM64})
         jq -n --argjson amd64 "$AMD64_JSON" --argjson arm64 "$ARM64_JSON" \
           '{ "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [($amd64 | .RepoTags = []), ($arm64 | .RepoTags = [])] } ] }' \
           > gh-pages/index/static

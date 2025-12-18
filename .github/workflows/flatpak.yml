@@ -86,7 +86,7 @@ jobs:
           ${APP_ID} ${FLATPAK_BRANCH}
 
     - name: Upload OCI Bundle
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: bundle-${{ matrix.arch }}
         path: bundle-${{ matrix.arch }}

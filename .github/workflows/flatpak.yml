@@ -30,9 +30,19 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            alt: x86_64 
+            runner: ubuntu-24.04
+          - arch: arm64
+            alt: aarch64
+            runner: ubuntu-24.04-arm
 
-    steps:
+    steps:        
     - uses: actions/checkout@v6
       with:
         submodules: true
@@ -40,15 +50,15 @@ jobs:
     - name: Install flatpak-builder
       run: |
         set -e
-        sudo apt update -y
-        sudo apt install -y flatpak-builder
+        sudo apt-get update
+        sudo apt-get install flatpak-builder
 
     - name: Download flatpak SDK and sources
       run: |
         set -e
         flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-        flatpak-builder --default-branch=${FLATPAK_BRANCH} --install-deps-from=flathub --install-deps-only --user /dev/null ${MANIFEST_PATH}
-        flatpak-builder --default-branch=${FLATPAK_BRANCH} --download-only /dev/null ${MANIFEST_PATH}
+        flatpak-builder --default-branch=${FLATPAK_BRANCH} --arch=${{ matrix.alt }} --install-deps-from=flathub --install-deps-only --user /dev/null ${MANIFEST_PATH}
+        flatpak-builder --default-branch=${FLATPAK_BRANCH} --arch=${{ matrix.alt }} --download-only /dev/null ${MANIFEST_PATH}
 
     # In Ubuntu, Git no longer allows you to add a submodule via file:///
     # transport. As a fix, run git config --global protocol.file.allow always
@@ -59,42 +69,27 @@ jobs:
     - name: Build flatpak
       run: |
         set -e
-        flatpak-builder --default-branch=${FLATPAK_BRANCH} --disable-updates --disable-download --ccache --sandbox --repo=${FLATPAK_BUILD_REPO} ${FLATPAK_BUILD_DIR} ${MANIFEST_PATH}
+        flatpak-builder --default-branch=${FLATPAK_BRANCH} --arch=${{ matrix.alt }} --disable-updates --disable-download --ccache --sandbox --repo=${FLATPAK_BUILD_REPO}-${{ matrix.arch }} ${FLATPAK_BUILD_DIR} ${MANIFEST_PATH}
 
-    - name: Upload flatpak repo
-      uses: actions/upload-artifact@v5
-      with:
-        name: ${{ env.FLATPAK_BUILD_REPO }}
-        path: ${{ env.FLATPAK_BUILD_REPO }}
-
-  publish-bundle:
-    runs-on: ubuntu-24.04
-    needs: build
-
-    steps:
-    - name: Install flatpak
+    - name: Create OCI Bundle
       run: |
         set -e
-        sudo apt update -y
-        sudo apt install -y flatpak
+        BUNDLE_DIR="bundle-${{ matrix.arch }}"
+        mkdir -p ${FLATPAK_BUILD_REPO}-${{ matrix.arch }}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
+        
+        flatpak build-bundle \
+          --arch=${{ matrix.alt }} \
+          --oci \
+          --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
+          ${FLATPAK_BUILD_REPO}-${{ matrix.arch }} \
+          $BUNDLE_DIR \
+          ${APP_ID} ${FLATPAK_BRANCH}
 
-    - name: Download flatpak repo
-      uses: actions/download-artifact@v6
+    - name: Upload OCI Bundle
+      uses: actions/upload-artifact@v6
       with:
-        name: ${{ env.FLATPAK_BUILD_REPO }}
-        path: ${{ env.FLATPAK_BUILD_REPO }}
-
-    - name: Create flatpak bundle
-      run: |
-        set -e
-        mkdir -p ${FLATPAK_BUILD_REPO}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
-        flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE}.flatpak ${APP_ID} ${FLATPAK_BRANCH}
-
-    - name: Upload flatpak bundle
-      uses: actions/upload-artifact@v5
-      with:
-        name: ${{ env.FLATPAK_BUNDLE }}
-        path: ${{ env.FLATPAK_BUNDLE }}.flatpak
+        name: bundle-${{ matrix.arch }}
+        path: bundle-${{ matrix.arch }}
 
   publish-oci:
     if: github.ref == 'refs/heads/main'
@@ -102,38 +97,38 @@ jobs:
     needs: build
 
     steps:
-    - name: Install flatpak and libcontainers tools
+    - name: Install libcontainers tools
       run: |
         set -e
-        sudo apt update -y
-        sudo apt install -y skopeo flatpak jq
+        sudo apt-get update
+        sudo apt-get install skopeo jq podman
 
-    - name: Download flatpak repo
-      uses: actions/download-artifact@v6
+    - name: Download OCI bundles
+      uses: actions/download-artifact@v7
       with:
-        name: ${{ env.FLATPAK_BUILD_REPO }}
-        path: ${{ env.FLATPAK_BUILD_REPO }}
+        pattern: bundle-*
 
-    - name: Create OCI bundle
-      run: |
-        set -e
-        mkdir -p ${FLATPAK_BUILD_REPO}/{extensions,refs/{mirrors,remotes},state,tmp/cache}
-        flatpak build-bundle \
-          --oci \
-          --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
-          ${FLATPAK_BUILD_REPO} ${FLATPAK_BUNDLE} ${APP_ID} ${FLATPAK_BRANCH}
-
-    - name: Publish OCI image
+    - name: Publish OCI images
       env:
         GITHUB_TOKEN: ${{ secrets.PAT }}
         REGISTRY_AUTH_FILE: /tmp/auth.json
       run: |
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
-        skopeo login --username "${{ github.actor }}" --password-stdin ghcr.io <<<$GITHUB_TOKEN
-        skopeo copy \
-          oci:${FLATPAK_BUNDLE} \
-          docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG
+        echo "$GITHUB_TOKEN" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+        podman manifest create local-list
+
+        for ARCH in amd64 arm64; do
+          echo "Processing $ARCH..."
+          BUNDLE_DIR="bundle-${ARCH}"
+          skopeo copy \
+            oci:${BUNDLE_DIR} \
+            docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}-${ARCH}
+
+          podman manifest add --arch $ARCH local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}-${ARCH}
+        done
+
+        podman manifest push --all local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}
 
     - name: Update static index
       env:
@@ -142,8 +137,14 @@ jobs:
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
         git clone -b gh-pages https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git gh-pages
-        skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}:$IMAGE_TAG | \
-          jq '. as $img | { "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [$img] } ] }' \
+        MANIFEST_LIST=$(skopeo inspect --raw docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG})
+        DIGEST_AMD64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "amd64") | .digest')
+        DIGEST_ARM64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "arm64") | .digest')
+        
+        AMD64_JSON=$(skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}@${DIGEST_AMD64})
+        ARM64_JSON=$(skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}@${DIGEST_ARM64})
+        jq -n --argjson amd64 "$AMD64_JSON" --argjson arm64 "$ARM64_JSON" \
+          '{ "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [($amd64 | .RepoTags = []), ($arm64 | .RepoTags = [])] } ] }' \
           > gh-pages/index/static
         cd gh-pages
         git config user.email "github-actions[bot]@users.noreply.github.com"

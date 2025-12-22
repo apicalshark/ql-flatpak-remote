@@ -124,10 +124,10 @@ jobs:
           skopeo copy \
             oci:${BUNDLE_DIR} \
             docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}-${ARCH}
-
+          sleep 5
           podman manifest add --arch $ARCH local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}-${ARCH}
         done
-
+        sleep 5
         podman manifest push --all local-list docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}
 
     - name: Update static index
@@ -136,7 +136,9 @@ jobs:
       run: |
         export IMAGE_REPOSITORY=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
         set -e
+        sleep 3
         git clone -b gh-pages https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git gh-pages
+        sleep 5
         MANIFEST_LIST=$(skopeo inspect --raw docker://ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG})
         DIGEST_AMD64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "amd64") | .digest')
         DIGEST_ARM64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "arm64") | .digest')

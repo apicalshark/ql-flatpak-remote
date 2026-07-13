@@ -95,9 +95,15 @@ jobs:
     - name: Merge repositories and update metadata
       run: |
         set -e
+        mkdir -p ~/.gnupg
+        echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
+        echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+        gpg-connect-agent reloadagent /bye
+
         echo "${{ secrets.GPG_KEY }}" | gpg --batch --import
         KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')
         GPG_PUB_B64=$(gpg --export $KEY_ID | base64 -w0)
+
         mkdir -p build-repo-amd64/refs/{remotes,mirrors}
         mkdir -p build-repo-arm64/refs/{remotes,mirrors}
         ostree init --mode=archive --repo=combined-repo
@@ -105,6 +111,7 @@ jobs:
         flatpak build-commit-from --src-repo=build-repo-amd64 combined-repo
         flatpak build-commit-from --src-repo=build-repo-arm64 combined-repo
         flatpak build-update-repo --gpg-sign=$KEY_ID combined-repo
+
         cat <<EOF > combined-repo/quantum-launcher.flatpakrepo
         [Flatpak Repo]
         Title=Quantum Launcher

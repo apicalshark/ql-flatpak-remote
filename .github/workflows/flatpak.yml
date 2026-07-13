@@ -107,8 +107,8 @@ jobs:
         mkdir -p build-repo-arm64/refs/{remotes,mirrors}
         ostree init --mode=archive --repo=combined-repo
         mkdir -p combined-repo/refs/{remotes,mirrors}
-        flatpak build-commit-from --src-repo=build-repo-amd64 combined-repo
-        flatpak build-commit-from --src-repo=build-repo-arm64 combined-repo
+        flatpak build-commit-from --gpg-sign=${{ steps.import-gpg.outputs.keyid }} --src-repo=build-repo-amd64 combined-repo
+        flatpak build-commit-from --gpg-sign=${{ steps.import-gpg.outputs.keyid }} --src-repo=build-repo-arm64 combined-repo
         flatpak build-update-repo --gpg-sign=${{ steps.import-gpg.outputs.keyid }} combined-repo
         cat <<EOF > combined-repo/quantum-launcher.flatpakrepo
         [Flatpak Repo]

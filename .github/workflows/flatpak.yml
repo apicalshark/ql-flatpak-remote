@@ -143,11 +143,31 @@ jobs:
         DIGEST_AMD64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "amd64") | .digest')
         DIGEST_ARM64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "arm64") | .digest')
         
+        MEDIATYPE_AMD64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "amd64") | .mediaType')
+        MEDIATYPE_ARM64=$(echo "$MANIFEST_LIST" | jq -r '.manifests[] | select(.platform.architecture == "arm64") | .mediaType')
+        
         AMD64_JSON=$(skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}@${DIGEST_AMD64})
         ARM64_JSON=$(skopeo inspect docker://ghcr.io/${IMAGE_REPOSITORY}@${DIGEST_ARM64})
-        jq -n --argjson amd64 "$AMD64_JSON" --argjson arm64 "$ARM64_JSON" \
-          '{ "Registry": "https://ghcr.io/", "Results": [ { "Name": "'${IMAGE_REPOSITORY}'", "Images": [($amd64 | .RepoTags = []), ($arm64 | .RepoTags = [])] } ] }' \
+        
+        jq -n \
+          --argjson amd64 "$AMD64_JSON" \
+          --argjson arm64 "$ARM64_JSON" \
+          --arg mediatype_amd64 "$MEDIATYPE_AMD64" \
+          --arg mediatype_arm64 "$MEDIATYPE_ARM64" \
+          '{
+            "Registry": "https://ghcr.io/",
+            "Results": [
+              {
+                "Name": "'${IMAGE_REPOSITORY}'",
+                "Images": [
+                  ($amd64 | .RepoTags = [] | .MediaType = $mediatype_amd64),
+                  ($arm64 | .RepoTags = [] | .MediaType = $mediatype_arm64)
+                ]
+              }
+            ]
+          }' \
           > gh-pages/index/static
+          
         cd gh-pages
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git config user.name "github-actions[bot]"

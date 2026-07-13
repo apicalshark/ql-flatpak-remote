@@ -160,8 +160,8 @@ jobs:
               {
                 "Name": "'${IMAGE_REPOSITORY}'",
                 "Images": [
-                  ($amd64 | .RepoTags = [] | .MediaType = $mediatype_amd64),
-                  ($arm64 | .RepoTags = [] | .MediaType = $mediatype_arm64)
+                  ($amd64 | .RepoTags = [] | .MediaType = $mediatype_amd64 | .OS = .Os),
+                  ($arm64 | .RepoTags = [] | .MediaType = $mediatype_arm64 | .OS = .Os)
                 ]
               }
             ]

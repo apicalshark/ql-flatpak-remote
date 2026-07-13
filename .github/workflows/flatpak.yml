@@ -15,12 +15,6 @@ env:
   APP_ID: io.github.Mrmayman.QuantumLauncher
   # Path to manifest (example= org.tenacityaudio.Tenacity.yaml)
   MANIFEST_PATH: io.github.Mrmayman.QuantumLauncher.yml
-  # Name of Docker image (example= tenacity)
-  IMAGE_NAME: quantum-launcher
-  # Tag of image  (example= stable, beta, nightly)
-  IMAGE_TAG: stable
-  # Name of bundle (excl. .flatpak) (example= tenacity)
-  FLATPAK_BUNDLE: quantum-launcher
   # Flatpak branch (example= stable, beta, nightly)
   FLATPAK_BRANCH: stable
 
@@ -92,6 +86,7 @@ jobs:
       with:
         pattern: build-repo-*
 
+    # Add gpg secret key and passphrase to secrets.
     - name: Import GPG key
       uses: crazy-max/ghaction-import-gpg@v7
       id: import-gpg
@@ -110,16 +105,17 @@ jobs:
         flatpak build-commit-from --gpg-sign=${{ steps.import-gpg.outputs.keyid }} --src-repo=build-repo-amd64 combined-repo
         flatpak build-commit-from --gpg-sign=${{ steps.import-gpg.outputs.keyid }} --src-repo=build-repo-arm64 combined-repo
         flatpak build-update-repo --gpg-sign=${{ steps.import-gpg.outputs.keyid }} combined-repo
-        cat <<EOF > combined-repo/quantum-launcher.flatpakrepo
+
+        cat <<EOF > combined-repo/quantumlauncher.flatpakrepo
         [Flatpak Repo]
         Title=Quantum Launcher
-        Url=https://apicalshark.github.io/ql-flatpak-remote/
-        Homepage=https://github.com/apicalshark/ql-flatpak-remote
-        Comment=Quantum Launcher Flatpak Repository
+        Url=https://mrmayman.github.io/ql-flatpak-remote/
+        Homepage=https://github.com/Mrmayman/ql-flatpak-remote
+        Comment=QuantumLauncher Flatpak Repository
         GPGKey=${GPG_PUB_B64}
         DefaultBranch=stable
         EOF
-        sed -i 's/^[ \t]*//' combined-repo/quantum-launcher.flatpakrepo
+        sed -i 's/^[ \t]*//' combined-repo/quantumlauncher.flatpakrepo
 
     - name: Deploy to GitHub Pages
       run: |

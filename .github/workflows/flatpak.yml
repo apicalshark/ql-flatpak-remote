@@ -97,6 +97,7 @@ jobs:
       id: import-gpg
       with:
         gpg_private_key: ${{ secrets.GPG_KEY }}
+        passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
     - name: Merge repositories and update metadata
       run: |

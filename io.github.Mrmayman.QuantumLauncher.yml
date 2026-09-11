@@ -1,8 +1,8 @@
 app-id: io.github.Mrmayman.QuantumLauncher
-rename-desktop-file: quantum-launcher.desktop
-rename-appdata-file: quantum-launcher.metainfo.xml
+rename-desktop-file: io.github.Mrmayman.QuantumLauncher.desktop
+rename-appdata-file: io.github.Mrmayman.QuantumLauncher.metainfo.xml
 runtime: org.freedesktop.Platform
-runtime-version: '25.08'
+runtime-version: '26.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
@@ -96,8 +96,8 @@ modules:
       - cargo --offline fetch --manifest-path Cargo.toml --verbose
       - cargo --offline build --profile release-ql --verbose
       - install -Dm755 target/release-ql/quantum_launcher /app/bin/quantum_launcher
-      - install -Dm644 assets/freedesktop/quantum-launcher.desktop /app/share/applications/quantum-launcher.desktop
-      - install -Dm644 assets/freedesktop/quantum-launcher.metainfo.xml /app/share/metainfo/quantum-launcher.metainfo.xml
+      - install -Dm644 assets/freedesktop/quantum-launcher.desktop /app/share/applications/io.github.Mrmayman.QuantumLauncher.desktop
+      - install -Dm644 assets/freedesktop/quantum-launcher.metainfo.xml /app/share/metainfo/io.github.Mrmayman.QuantumLauncher.metainfo.xml
       - install -Dm644 assets/icon/256x256/ql_logo.png /app/share/icons/hicolor/256x256/apps/io.github.Mrmayman.QuantumLauncher.png
       - install -Dm644 assets/icon/512x512/ql_logo.png /app/share/icons/hicolor/512x512/apps/io.github.Mrmayman.QuantumLauncher.png
       - install -Dm755 quantum-launcher /app/bin/quantum-launcher

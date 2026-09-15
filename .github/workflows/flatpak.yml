@@ -30,10 +30,10 @@ jobs:
         include:
           - arch: amd64
             alt: x86_64 
-            runner: ubuntu-24.04
+            runner: ubuntu-26.04
           - arch: arm64
             alt: aarch64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
 
     steps:        
     - uses: actions/checkout@v7
